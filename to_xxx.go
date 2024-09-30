@@ -11,27 +11,35 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func toArgs(abiArgs abi.Arguments, input any) ([]any, error) {
-	values := make([]any, 0, len(abiArgs))
-	for i, arg := range abiArgs {
-		v, ok := toArg(arg.Name, arg.Type, input)
-		if !ok {
-			return nil, fmt.Errorf("failed toArgs: %d, %s, %s", i, arg.Name, arg.Type.String())
-		}
-		values = append(values, v)
+func toArg(abiArg abi.Argument, input any) (any, error) {
+	v, ok := toAny(abiArg.Name, abiArg.Type, input)
+	if !ok {
+		return nil, fmt.Errorf("failed parsing - name: %s, type: %s", abiArg.Name, abiArg.Type.String())
 	}
-	return values, nil
+	return v, nil
+}
+
+func toArgs(abiArgs abi.Arguments, input any) ([]any, error) {
+	vs := make([]any, 0, len(abiArgs))
+	for _, arg := range abiArgs {
+		v, err := toArg(arg, input)
+		if err != nil {
+			return nil, err
+		}
+		vs = append(vs, v)
+	}
+	return vs, nil
 }
 
 const (
-	skipped     = true
+	ommited     = true
 	elemOfSlice = ""
 )
 
-func toArg(name string, abiTyp abi.Type, input any) (any, bool) {
+func toAny(name string, abiTyp abi.Type, input any) (any, bool) {
 	value, ok := toValue(name, input)
 	if !ok {
-		return nil, skipped
+		return nil, ommited
 	}
 	if value.Kind() == reflect.Invalid {
 		return nil, false
@@ -124,7 +132,7 @@ func toArg(name string, abiTyp abi.Type, input any) (any, bool) {
 			}
 		} else {
 			for i := 0; i < value.Len(); i++ {
-				arg, ok := toArg(elemOfSlice, *elemTyp, value.Index(i).Interface())
+				arg, ok := toAny(elemOfSlice, *elemTyp, value.Index(i).Interface())
 				if !ok {
 					return nil, false
 				}
@@ -161,11 +169,6 @@ func toValue(name string, input any) (reflect.Value, bool) {
 		}
 	case reflect.Func, reflect.Chan: // unsupported types
 		return reflect.Value{}, false
-	case reflect.Pointer:
-		if value.IsNil() {
-			return reflect.Value{}, false
-		}
-		return toValue(name, reflect.Indirect(value))
 	}
 	return value, true
 }
@@ -396,7 +399,7 @@ func toAbiUint(x any, base, bitSize int) (any, bool) {
 func toTuple(abiTyp abi.Type, input any) (reflect.Value, bool) {
 	values := make([]any, 0, len(abiTyp.TupleElems))
 	for i, subTyp := range abiTyp.TupleElems {
-		val, ok := toArg(abiTyp.TupleRawNames[i], *subTyp, input)
+		val, ok := toAny(abiTyp.TupleRawNames[i], *subTyp, input)
 		if !ok {
 			return reflect.Value{}, false
 		}

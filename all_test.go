@@ -19,11 +19,15 @@ func Test_All(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	output_anypack2, err := PackById(abijson, abijson.Methods[methodArgCallback].ID, map[string]interface{}{
-		"x":        [32]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-		"y":        big.NewInt(10),
-		"callback": fnty1,
-	})
+	output_anypack2, err := PackArgs(abijson, methodArgCallback,
+		[32]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+		big.NewInt(10),
+		fnty1)
+	// output_anypack2, err := PackById(abijson, abijson.Methods[methodArgCallback].ID, map[string]interface{}{
+	// 	"x":        [32]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	// 	"y":        big.NewInt(10),
+	// 	"callback": fnty1,
+	// })
 	if err != nil {
 		t.Fatal(err)
 	}
